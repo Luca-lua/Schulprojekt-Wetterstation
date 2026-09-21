@@ -1,0 +1,38 @@
+﻿@using MudBlazor.Utilities
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="/" />
+    <ResourcePreloader />
+    <link rel="stylesheet" href="@Assets["app.css"]" />
+    <link rel="stylesheet" href="@Assets["Wetterstation_Website.styles.css"]" />
+    <ImportMap />
+    <HeadOutlet />
+</head>
+
+<body>
+    @* Required *@
+    <MudThemeProvider />
+    <MudPopoverProvider />
+    @* Needed for dialogs *@
+    <MudDialogProvider />
+
+    @* Needed for snackbars *@
+    <MudSnackbarProvider />
+    <Routes />
+    <ReconnectModal />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet" />
+    <link href="@Assets["_content/MudBlazor/MudBlazor.min.css"]" rel="stylesheet" />
+    <link href="_content/Heron.MudCalendar/Heron.MudCalendar.min.css" rel="stylesheet" />
+    <link href="_content/Heron.MudTotalCalendar/Heron.MudTotalCalendar.min.css" rel="stylesheet" />
+    <script src="@Assets["_framework/blazor.web.js"]"></script>
+    <script src="@Assets["_content/MudBlazor/MudBlazor.min.js"]"></script>
+    <script type="module" src="_content/Heron.MudCalendar/Heron.MudCalendar.min.js"></script>
+</body>
+
+</html>
