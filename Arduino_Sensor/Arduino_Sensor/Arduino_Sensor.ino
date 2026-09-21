@@ -17,15 +17,19 @@
 
 #define WIND_SPEED_SENS A1 // Anemometer
 
+// Hallo
+
 Adafruit_BME680 bme(&Wire);
 
-void setup() {
-  pinMode(UV_SENS,INPUT);
-  pinMode(WIND_SPEED_SENS,INPUT);
+void setup()
+{
+  pinMode(UV_SENS, INPUT);
+  pinMode(WIND_SPEED_SENS, INPUT);
 
   // Setup serial debugging.
   Serial.begin(115200);
-  while (!Serial);
+  while (!Serial)
+    ;
 
   Serial.println("Serial started with baud 9600. Pinmodes assighned.");
 
@@ -33,7 +37,8 @@ void setup() {
   if (!bme.beginReading())
   {
     Serial.println("Unable to find BME680.");
-    while(1);
+    while (1)
+      ;
   }
 
   // Oversampling and Gas sensor heating config.
@@ -44,12 +49,13 @@ void setup() {
   bme.setGasHeater(320, 150);
 }
 
-void loop() {
+void loop()
+{
   // Get Values
 
-  //bme.temperature
-  //bme.pressure
-  //bme.humidity
-  //bme.gas_resistance
-  //bme.readAltitude(float seaLevel)
+  // bme.temperature
+  // bme.pressure
+  // bme.humidity
+  // bme.gas_resistance
+  // bme.readAltitude(float seaLevel)
 }
