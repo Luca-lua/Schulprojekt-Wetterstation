@@ -1,7 +1,18 @@
 ﻿@page "/"
+@rendermode InteractiveServer
+@inject NavigationManager Navigation
 
 <PageTitle>Home</PageTitle>
 
-<h1>Hello, world!</h1>
+<h1>Wetterstation</h1>
 
 Welcome to your new app.
+
+<MudButton OnClick="() => GoToPastWeatherData()">ASDF</MudButton>
+
+@code {
+    private void GoToPastWeatherData()
+    {
+        Navigation.NavigateTo("/past-weather-data");
+    }
+}
