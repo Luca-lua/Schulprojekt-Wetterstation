@@ -19,6 +19,8 @@
 
 Adafruit_BME680 bme(&Wire);
 
+// Test 
+
 void setup() {
   pinMode(UV_SENS,INPUT);
   pinMode(WIND_SPEED_SENS,INPUT);
