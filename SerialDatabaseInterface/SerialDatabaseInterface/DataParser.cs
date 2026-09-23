@@ -11,8 +11,7 @@ namespace SerialDatabaseInterface
         private List<string> attributes = new List<string>();
         private string message = string.Empty;
 
-        internal Dictionary<string,string> Results = new Dictionary<string,string>();
-
+        internal Dictionary<string,float> Results = new Dictionary<string, float>();
         internal void AddAttribute(string attr)
         {
             attributes.Add(attr);
@@ -38,7 +37,7 @@ namespace SerialDatabaseInterface
 
         private void ParseMessage(string message)
         {
-            Results = new Dictionary<string,string>();
+            Results = new Dictionary<string,float>();
 
             string[] lines = message.Split('\n');
             
@@ -46,9 +45,14 @@ namespace SerialDatabaseInterface
             {
                 if (attributes.FirstOrDefault(attr => line.Contains(attr)) != null)
                 {
+                    // Create or overwrite (2nd dataset has priority)
                     if (!Results.ContainsKey(attributes.First(attr => line.Contains(attr))))
                     {
-                        Results.Add(attributes.First(attr => line.Contains(attr)), line.Split(":")[1]);
+                        Results.Add(attributes.First(attr => line.Contains(attr)), float.Parse(line.Split(":")[1].Replace(".",",")));
+                    }
+                    else
+                    {
+                        Results[attributes.First(attr => line.Contains(attr))] = float.Parse(line.Split(":")[1].Replace(".", ","));
                     }
                 }
             }

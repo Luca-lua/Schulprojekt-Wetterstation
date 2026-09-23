@@ -1,4 +1,5 @@
 ﻿using InfluxDB.Client;
+using InfluxDB.Client.Api.Domain;
 using InfluxDB.Client.Writes;
 using System;
 using System.Diagnostics;
@@ -14,9 +15,18 @@ namespace SerialDatabaseInterface
         private static DataParser dataParser;
         private static InfluxDBClient client;
         private static WriteApi writeApi;
+        private static DatabaseInfos databaseInfos;
         static void Main(string[] args)
         {
             SerialPort port = PortBuilder.BuildFromJson("./COM.json");
+
+            databaseInfos = DatabaseInfos.FromJsonFile("./DB_Connection.json");
+
+            var token = TokenBuilder.FromJson("./API_Token.json");
+
+            client = new InfluxDBClient(databaseInfos.IP_Address, token);
+            writeApi = client.GetWriteApi();
+
 
             port.DataReceived += Port_DataReceived;
             port.Open();
@@ -25,15 +35,8 @@ namespace SerialDatabaseInterface
             dataParser.AddAttribute("Temperature");
             dataParser.AddAttribute("Humidity");
             dataParser.AddAttribute("IAQ_Index");
-            dataParser.AddAttribute("UV_Sensor");
+            dataParser.AddAttribute("UV_Index");
             dataParser.AddAttribute("QNE_Pressure");
-
-            var token = TokenBuilder.FromJson("./API_Token.json");
-            const string bucket = "Wetterstation_sensordata";
-            const string org = "docs";
-
-            client = new InfluxDBClient("http://localhost:8086", token);
-            writeApi = client.GetWriteApi();
 
             bool exit = false;
             Console.WriteLine("Application running. \nPress ^C to exit...");
@@ -54,7 +57,7 @@ namespace SerialDatabaseInterface
         {
             if(dataParser.StageMessage(sender))
             {
-                foreach(KeyValuePair<string,string> attr in dataParser.Results)
+                foreach(KeyValuePair<string,float> attr in dataParser.Results)
                 {
                     Console.WriteLine($"{attr.Key}: \t {attr.Value}");
                     var point = PointData
@@ -62,7 +65,7 @@ namespace SerialDatabaseInterface
                         .Field(attr.Key, attr.Value)
                         .Timestamp(DateTime.UtcNow, InfluxDB.Client.Api.Domain.WritePrecision.Ns);
 
-                    writeApi.WritePoint(point, "Wetterstation_sensordata","docs");
+                    writeApi.WritePoint(point, databaseInfos.Bucket, databaseInfos.Organisation);
                 }
             }
         }
