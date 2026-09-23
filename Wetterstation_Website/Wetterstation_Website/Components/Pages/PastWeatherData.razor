@@ -1,0 +1,129 @@
+@page "/past-weather-data"
+@using MudBlazor.Charts;
+@inject NavigationManager Navigation
+
+<h1>Past Weather Data</h1>
+
+<MudDivider/>
+
+<MudContainer>
+    <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center">
+        <MudStack Spacing="8" AlignItems="@AlignItems.Center">
+            <MudToggleGroup T="string" @bind-Value="_value1" Vertical="@_vertical" Outlined="@_outlined" Delimiters="@_delimiters" CheckMark="@_checkMark" FixedContent="@_fixedContent" Disabled="@_disabled" Style="width: 20rem">
+                <MudToggleItem Value="@("One")" />
+                <MudToggleItem Value="@("Two")" />
+                <MudToggleItem Value="@("Three")" />
+            </MudToggleGroup>
+        </MudStack>
+    </MudStack>
+
+    <MudPaper Class="doc-section-component-container">
+        <MudChart T="double" ChartType="ChartType.Timeseries"
+                ChartSeries="@_series"
+                @bind-SelectedIndex="_index"
+                MatchBoundsToSize="@_matchBoundsToSize"
+                CanHideSeries="true"
+                Width="@_width"
+                Height="@_height"
+                ChartOptions="_options" />
+    </MudPaper>
+
+    <MudGrid>
+        <MudItem xs="12">
+            <MudText Typo="Typo.body1" Class="py-3">Selected: @(_index < 0 ? "None" : _series[_index].Name)</MudText>
+        </MudItem>
+        <MudItem md="6" xs="12">
+            <MudCheckBox @bind-Value="_options.TimeLabelSpacingRounding" Color="Color.Primary" Label="TimeLabelSpacing Rounding"></MudCheckBox>
+        </MudItem>
+        <MudItem md="6" xs="12">
+            <MudCheckBox @bind-Value="_options.TimeLabelSpacingRoundingPadSeries" Color="Color.Primary" Label="TimeLabelSpacing Rounding - Pad Series"></MudCheckBox>
+        </MudItem>
+        <MudItem md="6" xs="12">
+            <MudCheckBox @bind-Value="_matchBoundsToSize" Color="Color.Primary" Label="MatchBoundsToSize"></MudCheckBox>
+        </MudItem>
+        <MudItem md="6" xs="12">
+            <MudCheckBox T="bool" @bind-Value="_options.ShowDataMarkers" Color="Color.Primary" Label="Show Data Markers"></MudCheckBox>
+        </MudItem>
+        <MudItem md="6" xs="12">
+            <MudSlider @bind-Value="_options.XAxisLabelRotation" Min="0" Max="90" Step="15">XAxis Label Rotation</MudSlider>
+        </MudItem>
+        <MudItem md="6" xs="12">
+            <MudSlider @bind-Value="_options.LineStrokeWidth" Min="1" Max="10">Line Width: @_options.LineStrokeWidth.ToString()</MudSlider>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+<MudDivider/>
+<MudSpacer/>
+
+<MudButton OnClick="() => GoBackToHome()">Homepage</MudButton>
+
+@code {
+
+    // TODO: mudtabs verwenden statt mudtoggles, da tabs besser für die navigation zwischen den diagrammen geeignet sind.
+    // Außerdem unnötiges Zeug der Diagramme wegschmeißen.
+
+    string _value1 = "blah";
+    bool _checkMark = false;
+    bool _outlined = true;
+    bool _delimiters = true;
+    bool _fixedContent = false;
+    bool _disabled = false;
+    bool _vertical = false;
+     private void GoBackToHome()
+    {
+        Navigation.NavigateTo("/");
+    }
+
+    private int _index = -1; //default value cannot be 0 -> first selectedindex is 0.
+    private TimeSeriesChartOptions _options = new TimeSeriesChartOptions
+        {
+            YAxisLines = false,
+            YAxisTicks = 500,
+            MaxNumYAxisTicks = 10,
+            YAxisRequireZeroPoint = true,
+            XAxisLines = false,
+            LineStrokeWidth = 1,
+            ShowDataMarkers = false,
+            TooltipTimeLabelFormat = "yyyy MMM dd HH:mm:ss",
+            TimeLabelSpacing = TimeSpan.FromMinutes(5),
+            XAxisTitle = "Time",
+            YAxisTitle = "Values",
+        };
+
+    private ChartSeries<double> _chart1 = new();
+
+    private List<ChartSeries<double>> _series = new();
+
+    private readonly Random _random = new Random();
+
+    private bool _matchBoundsToSize = false;
+
+    private string _width = "100%";
+    private string _height = "350px";
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        var now = DateTime.Now;
+        _chart1 = new ChartSeries<double>
+            {
+                Name = "Series 1",
+                Data = Enumerable.Range(-360, 360).Select(x => new TimeValue<double>(now.AddSeconds(x * 10), _random.Next(6000, 15000))).ToArray(),
+                Visible = true,
+            };
+
+        _options.SeriesDisplayOverrides = new Dictionary<IChartSeries, SeriesDisplayOverride>()
+        {
+            [_chart1] = new SeriesDisplayOverride
+            {
+                LineDisplayType = LineDisplayType.Area,
+            }
+        };
+
+        _series.Add(_chart1);
+
+        StateHasChanged();
+    }
+}
