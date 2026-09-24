@@ -48,11 +48,25 @@ namespace SerialDatabaseInterface
                     // Create or overwrite (2nd dataset has priority)
                     if (!Results.ContainsKey(attributes.First(attr => line.Contains(attr))))
                     {
-                        Results.Add(attributes.First(attr => line.Contains(attr)), float.Parse(line.Split(":")[1].Replace(".",",")));
+                        try {
+                            Results.Add(attributes.First(attr => line.Contains(attr)), float.Parse(line.Split(":")[1].Replace(".", ",")));
+                        }
+                        catch(Exception ex)
+                        {
+                            Results.Clear();
+                            break;
+                        }
                     }
                     else
                     {
-                        Results[attributes.First(attr => line.Contains(attr))] = float.Parse(line.Split(":")[1].Replace(".", ","));
+                        try { 
+                            Results[attributes.First(attr => line.Contains(attr))] = float.Parse(line.Split(":")[1].Replace(".", ","));
+                        }
+                        catch (Exception ex)
+                        {
+                            Results.Clear();
+                            break;
+                        }
                     }
                 }
             }

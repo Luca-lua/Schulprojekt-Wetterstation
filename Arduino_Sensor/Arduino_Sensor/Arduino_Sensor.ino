@@ -30,6 +30,7 @@ int last_sent_pressure = 0;
 
 void setup() {
   // set Pinmodes
+  pinMode(LED_BUILTIN, OUTPUT);
   pinMode(UV_SENS,INPUT);
   pinMode(WIND_SPEED_SENS,INPUT);
   Wire.begin();
@@ -43,7 +44,7 @@ void setup() {
   if (!bme.begin())
   {
     Serial.println("Unable to find BME680.");
-    while(1);
+    inbuiltLEDError(333);
   }
   Serial.print("Found BME680");
 
@@ -67,42 +68,17 @@ void loop() {
   Serial.print("IAQ_Index: ");
   Serial.println(log(bme.gas_resistance) + 0.04 * bme.humidity);
 
-  
-
   float voltage = analogRead(UV_SENS) * (5.0 / 1023.0);
 
-  float uvIndex = (voltage - DARK_VOLTAGE) * REF_UVI / (REF_VOLTAGE - DARK_VOLTAGE);
-
-  if (uvIndex < 0) uvIndex = 0;
-
   Serial.print("UV_Index: ");
-  Serial.println(uvIndex);
+  Serial.println(calculateUVIndex(DARK_VOLTAGE,REF_UVI,REF_VOLTAGE,voltage));
 
   // send pressure only if it has changed by a set margin
   int pressure = bme.pressure;
   if(abs(last_sent_pressure-pressure) > 5)
-  {
-    // calculate pressure at ground based on height
-    int target_height = 382;
-    float QNH = 1013.0;
-    float Range = 40;
-    int least_height_diff = 100;
-    float least_diff_press = QNH;
-    int height = 341;
-
-    for(float current_test_press = QNH-Range/2; current_test_press < QNH+Range/2; current_test_press += 1)
-    {
-      int test_alt = bme.readAltitude(current_test_press);
-      if (abs(test_alt - height) < least_height_diff)
-      {
-        least_height_diff = abs(test_alt - height);
-
-        least_diff_press = current_test_press-1;
-      }
-    }
-
+  {    
     Serial.print("QNE_Pressure: ");
-    Serial.println(least_diff_press);
+    Serial.println(getQNEPressure(bme,382));
     last_sent_pressure = pressure;
   }
 
@@ -113,4 +89,49 @@ void loop() {
 
   // delay for 5 seconds
   delay(5*1000);
+}
+
+// calculate UVIndex based of UV sensor values
+float calculateUVIndex(float dark_voltage,float ref_uvi, float ref_voltage, float voltage)
+{
+  float uvIndex = (voltage - dark_voltage) * ref_uvi / (ref_voltage - dark_voltage);
+
+  if (uvIndex < 0) uvIndex = 0;
+
+  return uvIndex;
+}
+
+// calculate pressure at ground based on height
+float getQNEPressure(Adafruit_BME680 bme, int target_height)
+{
+  float QNH = 1013.0;
+  float Range = 40;
+  int least_height_diff = 100;
+  float least_diff_press = QNH;
+  int height = 341;
+
+  for(float current_test_press = QNH-Range/2; current_test_press < QNH+Range/2; current_test_press += 1)
+  {
+    int test_alt = bme.readAltitude(current_test_press);
+
+    if (abs(test_alt - height) < least_height_diff)
+    {
+      least_height_diff = abs(test_alt - height);
+
+      least_diff_press = current_test_press-1;
+    }
+  }
+  return least_diff_press;
+}
+
+// time_on_ms on -> 1000-time_on_ms ms off -> repeat
+void inbuiltLEDError(int time_on_ms)
+{
+  while(1)
+  {
+    digitalWrite(LED_BUILTIN, HIGH);
+    delay(time_on_ms); 
+    digitalWrite(LED_BUILTIN, LOW); 
+    delay(1000-time_on_ms);
+  }
 }

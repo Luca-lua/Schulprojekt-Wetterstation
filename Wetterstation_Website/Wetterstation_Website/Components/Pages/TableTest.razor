@@ -1,0 +1,32 @@
+﻿@page "/test-table-component"
+@using MudBlazor.Charts;
+@using Wetterstation_Website.Components.Components
+@inject NavigationManager Navigation
+
+<div style="width: 100%; height: 25vh">
+    <TimeTable conn="@conn" flux_query="@flux_query_humidity" max_value="100" Title="Humidity" chart_color="Red" Y_axis_label="Percent" />
+</div>
+<div style="width: 100%; height: 25vh">
+    <TimeTable conn="@conn" flux_query="@flux_query_temperature" max_value="50" Title="Temperature" chart_color="Green" Y_axis_label="°C" />
+</div>
+
+<div style="width: 100%; height: 25vh">
+    <TimeTable conn="@conn" flux_query="@flux_query_pressure" max_value="1050" Title="QNE_Pressure" chart_color="Blue" Y_axis_label="mbar" />
+</div>
+
+
+@code {
+    public InfluxConnection conn = new InfluxConnection();
+
+    private string flux_query_humidity = @"from(bucket: ""Wetterstation_sensordata"")
+  |> range(start: -6h)
+  |> filter(fn: (r) => r._measurement == ""Humidity"")";
+
+    private string flux_query_temperature = @"from(bucket: ""Wetterstation_sensordata"")
+  |> range(start: -6h)
+  |> filter(fn: (r) => r._measurement == ""Temperature"")";
+
+    private string flux_query_pressure = @"from(bucket: ""Wetterstation_sensordata"")
+  |> range(start: -6h)
+  |> filter(fn: (r) => r._measurement == ""QNE_Pressure"")";
+}

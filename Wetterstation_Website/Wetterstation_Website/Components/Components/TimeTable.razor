@@ -1,0 +1,126 @@
+﻿@using InfluxDB.Client;
+@using InfluxDB.Client.Core.Flux.Domain;
+@using MudBlazor;
+@using MudBlazor.Charts;
+<MudPaper Style="width: 100%; height: 100%">
+    <MudIconButton OnClick="RefreshData" Style="position: absolute; right: 2.5vw" Icon="@Icons.Material.Filled.Refresh"/>
+    <MudChart Style="padding: 1%" T="float" ChartType="ChartType.Timeseries"
+              ChartSeries="@series"
+              @bind-SelectedIndex="_index"
+              MatchBoundsToSize="true"
+              CanHideSeries="false"
+              Width="100%"
+              Height="100%"
+              ChartOptions="_options"
+              />
+</MudPaper>
+@code {
+    [Parameter]
+    public string chart_color { get; set; } = "Pink";
+
+    [Parameter]
+    public string Y_axis_label { get; set; } = "Values";
+
+    [Parameter]
+    public string Title { get; set; } = "";
+
+    [Parameter]
+    public int max_value { get; set; }
+
+    [Parameter]
+    public string flux_query { get; set; }
+
+    [Parameter]
+    public InfluxConnection conn { get; set; }
+
+    private List<ChartSeries<float>> series = new List<ChartSeries<float>>();
+
+    private int _index = -1;
+
+    private TimeSeriesChartOptions _options;
+
+    private PeriodicTimer _timer;
+
+    private CancellationToken _cts;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _cts = new CancellationToken();
+        _timer = new PeriodicTimer(TimeSpan.FromSeconds(10));
+
+        _ = RefreshWithInterval(_cts);
+
+        _options = new TimeSeriesChartOptions
+        {
+            YAxisLines = true,
+            YAxisTicks = 20,
+            YAxisSuggestedMax = max_value,
+            MaxNumYAxisTicks = 10,
+            YAxisRequireZeroPoint = true,
+            XAxisLines = false,
+            LineStrokeWidth = 2,
+            ShowDataMarkers = false,
+            TooltipTimeLabelFormat = "yyyy MMM dd HH:mm:ss",
+            TimeLabelSpacing = TimeSpan.FromMinutes(60),
+            XAxisTitle = Title,
+            YAxisTitle = Y_axis_label,
+            ChartPalette = [chart_color],
+            ShowLegend = false,
+            TimeLabelSpacingRounding = true,
+        };
+        await RefreshData();
+    }
+
+    private async Task RefreshWithInterval(CancellationToken cancellationToken)
+    {
+        {
+            try
+            {
+                while (_timer != null && await _timer.WaitForNextTickAsync(cancellationToken))
+                {
+                    await RefreshData();
+                    await InvokeAsync(StateHasChanged); 
+                }
+            }
+            catch (OperationCanceledException)
+            {
+
+            }
+            finally
+            {
+                _timer?.Dispose();
+            }
+        }
+    }
+
+    private async Task RefreshData()
+    {
+        series = new List<ChartSeries<float>>();
+        List<FluxTable> tables = await conn.Client.GetQueryApi().QueryAsync(flux_query, conn.infos.Organisation);
+        foreach(FluxTable table in tables)
+        {
+            ChartSeries<float> chartSeries = new ChartSeries<float>();
+            List<TimeValue<float>> data = new List<TimeValue<float>>();
+            foreach(FluxRecord record in table.Records)
+            {
+                object value = record.GetValue();
+
+                NodaTime.Instant? date = record.GetTime();
+
+                if(chartSeries.Name == null || chartSeries.Name == "")
+                {
+                    string measurement = record.GetMeasurement();
+
+                    chartSeries.Name = measurement;
+                }
+
+                if (date != null && float.TryParse(value.ToString(),out _))
+                {
+                    data.Add(new TimeValue<float>(date.Value.ToDateTimeOffset().DateTime.ToLocalTime(),float.Parse(value.ToString())));
+                }
+            }
+            chartSeries.Data = data;
+            series.Add(chartSeries);
+        }
+    }
+}
